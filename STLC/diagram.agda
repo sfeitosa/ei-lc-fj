@@ -101,9 +101,8 @@ module diagram where
   -------------------------------------------
 
   elabSteps : ∀ {e τ} → [] ⊢ e ∶ τ → Steps e → Maybe (∃ Value)
-  -- here we need a generalized version of preservation
-  elabSteps {τ = τ}prf (steps st (done v))
-     = just (τ , elabVal (EE v {!!} []))
+  elabSteps {τ = τ} prf (steps st (done v))
+     = just (τ , elabVal (EE v (soundness prf st) []))
   elabSteps _ (steps st out-of-gas) = nothing
 
   -----------------------------------------------

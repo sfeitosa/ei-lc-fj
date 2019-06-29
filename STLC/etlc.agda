@@ -220,3 +220,9 @@ eval {e} (suc f) t with progress t
 ... | Step stp with eval f (preservation t stp)
 ...   | steps stp' fin = steps (multi stp stp') fin
 
+-- type soundness
+
+soundness : ∀ {e τ e'} → [] ⊢ e ∶ τ → e ↠ e' → [] ⊢ e' ∶ τ
+soundness prf refl = prf
+soundness prf (multi st sts) with preservation prf st
+...| prf' = soundness prf' sts 
