@@ -72,6 +72,9 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
           → (Class.meths cd) ∋ m ∶ mdecl
           → method c m mdecl
 
+
+  -- Small step relation
+  
   module Eval (Δ : CT) where
 
     open Auxiliary Δ
@@ -180,25 +183,24 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
     CTOk : CT → Set
     CTOk Δ = All (λ ci → ClassOk (proj₂ ci)) Δ
 
---  open Typing 
-
   module AuxiliaryLemmas (Δ : CT) where
 
     open Typing Δ
     open Auxiliary Δ
 
-    -- We assume that a class table doesn't have a class with name Obj
-    -- We assume that a context is a set (i.e. there are no duplicate elements)
     postulate
+      -- We assume that a class table doesn't have a class with name Obj
       Obj-∉-CT : ∀ {Δ} → ¬ (Obj ∈ Δ)
+      -- We assume that a context is a set (i.e. there are no duplicate elements)      
+      ∋-first : ∀ {A Δ x τ} {a : A} → ((x , a) ∷ Δ) ∋ x ∶ τ → a ≡ τ
+      -- We assume a well-formed class table
       Δwf : CTOk Δ
-      ∋-First : ∀ {A Δ x τ} {a : A} → ((x , a) ∷ Δ) ∋ x ∶ τ → a ≡ τ
 
     -- Properties related to operator _∋_∶_
 
-    ∋-ElimNEq : ∀ {A Δ x y} {a b : A} → x ≢ y → ((y , b) ∷ Δ) ∋ x ∶ a → Δ ∋ x ∶ a
-    ∋-ElimNEq p here = ⊥-elim (p refl)
-    ∋-ElimNEq p (there hx) = hx
+    ∋-elim-≢ : ∀ {A Δ x y} {a b : A} → x ≢ y → ((y , b) ∷ Δ) ∋ x ∶ a → Δ ∋ x ∶ a
+    ∋-elim-≢ p here = ⊥-elim (p refl)
+    ∋-elim-≢ p (there hx) = hx
 
     ∋-∈ : ∀ {A Δ x} {τ : A} → Δ ∋ x ∶ τ → x ∈ (proj₁ (unzip Δ))
     ∋-∈ here = here refl
@@ -212,8 +214,8 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
 
     ≡-∋ : ∀ {A Δ x} {a b : A} → Δ ∋ x ∶ a → Δ ∋ x ∶ b → a ≡ b
     ≡-∋ {Δ = (y , _) ∷ Δ} {x = x} ha hb with x ≟ y
-    ... | yes refl rewrite ∋-First ha | ∋-First hb = refl
-    ... | no ¬p = ≡-∋ (∋-ElimNEq ¬p ha) (∋-ElimNEq ¬p hb)
+    ... | yes refl rewrite ∋-first ha | ∋-first hb = refl
+    ... | no ¬p = ≡-∋ (∋-elim-≢ ¬p ha) (∋-elim-≢ ¬p hb)
 
     ≡-fields : ∀ {c fs fs'} → fields c fs → fields c fs' → fs ≡ fs'
     ≡-fields obj obj = refl
@@ -230,8 +232,8 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
 
     ⊢-interl : ∀ {Δ₁ Δ₂ el Γ f e τ} → interl Δ₁ el Δ₂ → Γ ⊧ el ∶ proj₂ (unzip Δ₁) → Δ₁ ∋ f ∶ τ → Δ₂ ∋ f ∶ e → Γ ⊢ e ∶ τ
     ⊢-interl {f = f} (there {x} zp) (there t env) ht he with f ≟ x
-    ... | yes refl rewrite ∋-First he | ∋-First ht = t
-    ... | no ¬p = ⊢-interl zp env (∋-ElimNEq ¬p ht) (∋-ElimNEq ¬p he)
+    ... | yes refl rewrite ∋-first he | ∋-first ht = t
+    ... | no ¬p = ⊢-interl zp env (∋-elim-≢ ¬p ht) (∋-elim-≢ ¬p he)
 
     ⊧-interl : ∀ {Δ₁ Δ₂ vl} → Δ₁ ⊧ vl ∶ (proj₂ (unzip Δ₂)) → (∃ λ zp → interl Δ₂ vl zp)
     ⊧-interl {Δ₂ = []} {[]} tl = [] , here
@@ -250,8 +252,8 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
     ok-ctable-class (cd ∷ ctok) here = cd
     ok-ctable-class (cd ∷ ctok) (there c) = ok-ctable-class ctok c
 
-    ⊢-Method : ∀ {C m MD} → method C m MD → Meth.params MD ⊢ Meth.body MD ∶ Meth.ret MD
-    ⊢-Method (this {_} {CD} cd md) with ok-class-meth (ok-ctable-class Δwf cd) md
+    ⊢-method : ∀ {C m MD} → method C m MD → Meth.params MD ⊢ Meth.body MD ∶ Meth.ret MD
+    ⊢-method (this {_} {CD} cd md) with ok-class-meth (ok-ctable-class Δwf cd) md
     ... | T-Method tm = tm
 
 
@@ -267,8 +269,8 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
     subst-var : ∀ {Γ Γ₁ x el pe C} → Γ ∋ x ∶ C → Γ₁ ⊧ el ∶ proj₂ (unzip Γ) → interl Γ el pe → Γ₁ ⊢ subs (Var x) pe ∶ C
     subst-var {.[]} {Γ₁} {x} {.[]} {[]} {C} () here here
     subst-var {((y , _) ∷ xs)} {Γ₁} {x} {.(_ ∷ _)} {.(_ , _) ∷ pe} {C} v (there t env) (there zp) with x ≟ y
-    ... | yes refl rewrite ∋-First v = t
-    ... | no ¬p = subst-var (∋-ElimNEq ¬p v) env zp
+    ... | yes refl rewrite ∋-first v = t
+    ... | no ¬p = subst-var (∋-elim-≢ ¬p v) env zp
 
 
     subst : ∀ {Γ Γ₁ e pe C el} → Γ₁ ⊢ e ∶ C → Γ ⊧ el ∶ proj₂ (unzip Γ₁) → interl Γ₁ el pe → Γ ⊢ (subs e pe) ∶ C
@@ -328,18 +330,45 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
 
     -- Preservation proof
 
-    preservation : ∀ {Γ e e' τ} → Γ ⊢ e ∶ τ → e ⟶ e' → Γ ⊢ e' ∶ τ
-    preservation-list : ∀ {Γ el el' τl} → Γ ⊧ el ∶ τl → el ↦ el' → Γ ⊧ el' ∶ τl
+    preservation : ∀ {e e' τ} → [] ⊢ e ∶ τ → e ⟶ e' → [] ⊢ e' ∶ τ
+    preservation-list : ∀ {el el' τl} → [] ⊧ el ∶ τl → el ↦ el' → [] ⊧ el' ∶ τl
 
     preservation (T-Var x) () -- Not necessary anymore
     preservation (T-Field tp fls bnd) (RC-Field ev) = T-Field (preservation tp ev) fls bnd
     preservation (T-Field (T-New fs₁ tps) fs₂ bnd) (R-Field fs₃ zp bnde) rewrite ≡-fields fs₁ fs₂ | ≡-fields fs₂ fs₃ = ⊢-interl zp tps bnd bnde
     preservation (T-Invk tp tmt tpl) (RC-InvkRecv ev) = T-Invk (preservation tp ev) tmt tpl
     preservation (T-Invk tp tmt tpl) (RC-InvkArg evl) = T-Invk tp tmt (preservation-list tpl evl)
-    preservation (T-Invk (T-New x x₁) tmt tpl) (R-Invk rmt zp) rewrite ≡-method rmt tmt = subst (⊢-Method tmt) tpl zp
+    preservation (T-Invk (T-New x x₁) tmt tpl) (R-Invk rmt zp) rewrite ≡-method rmt tmt = subst (⊢-method tmt) tpl zp
     preservation (T-New fls tpl) (RC-NewArg evl) = T-New fls (preservation-list tpl evl)
 
     preservation-list here () -- Not necessary anymore
     preservation-list (there tp tpl) (here ev) = there (preservation tp ev) tpl
     preservation-list (there tp tpl) (there evl) = there tp (preservation-list tpl evl)
+
+  module Evaluation (Δ : CT) where
+
+    open Eval Δ
+    open Typing Δ
+    open Properties Δ
+
+    Fuel = ℕ
+
+    infix 2 _↠_
+    data _↠_ : Expr → Expr → Set where
+      refl  : ∀ {e} → e ↠ e
+      multi : ∀ {e e' e''} → e ⟶ e' → e' ↠ e'' → e ↠ e''
+
+    data Finished (e : Expr) : Set where
+      done       : Val e → Finished e
+      out-of-gas : Finished e
+
+    data Steps (e : Expr) : Set where
+      steps : ∀ {e'} → e ↠ e' → Finished e' → Steps e
+
+    eval : ∀ {e τ} → Fuel → [] ⊢ e ∶ τ → Steps e
+    eval zero t = steps refl out-of-gas
+    eval (suc fuel) t with progress t
+    ... | Done vl = steps refl (done vl)
+    ... | Step stp with eval fuel (preservation t stp)
+    ...   | steps stp' fin = steps (multi stp stp') fin
 

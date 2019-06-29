@@ -82,11 +82,13 @@ module itfj (n : ℕ) where
     open Syntax Δ
     open Implementation Δ
 
+    Fuel = ℕ
+
     Env : Ctx → Set
     Env Γ = All Val Γ
 
-    eval : ∀ {Γ c} → ℕ → CTImpl → Env Γ → Expr Γ c → Maybe (Val c)
-    eval-list : ∀ {Γ cs} → ℕ → CTImpl → Env Γ → All (Expr Γ) cs → Maybe (All Val cs)
+    eval : ∀ {Γ c} → Fuel → CTImpl → Env Γ → Expr Γ c → Maybe (Val c)
+    eval-list : ∀ {Γ cs} → Fuel → CTImpl → Env Γ → All (Expr Γ) cs → Maybe (All Val cs)
 
     eval zero δ γ e = nothing
     eval (suc f) δ γ (Var x) = just (lookupA γ x)
