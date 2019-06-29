@@ -100,15 +100,20 @@ module diagram where
   -- Converting steps to elaborated values --
   -------------------------------------------
 
-  elabSteps : ∀ {Γ e τ} → Γ ⊢ e ∶ τ → Steps e → Env' Γ → Maybe (∃ Value)
+  elabSteps : ∀ {e τ} → [] ⊢ e ∶ τ → Steps e → Maybe (∃ Value)
   -- here we need a generalized version of preservation
-  elabSteps prf (steps st (done v)) env = just ({!!} , elabVal (EE v {!!} env))
-  elabSteps _ (steps st out-of-gas) _   = nothing
+  elabSteps {τ = τ}prf (steps st (done v))
+     = just (τ , elabVal (EE v {!!} []))
+  elabSteps _ (steps st out-of-gas) = nothing
+
+  -----------------------------------------------
+  -- Diagram theorem relating eval and interp  --
+  -----------------------------------------------
 
   diagram-theorem : ∀ {e τ n}(t : [] ⊢ e ∶ τ) →
-    elabSteps t (eval n t) [] ≡ interp n (elab t) []
+    elabSteps t (eval n t) ≡ interp n (elab t) []
   diagram-theorem {n = zero} t with elab t
   ...| t' = refl
   diagram-theorem {n = suc n} t with eval (suc n) t | progress t
-  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Step x₂ = ?
-  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Done x₂ = ?
+  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Step x₂ = {!!}
+  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Done x₂ = {!!}
