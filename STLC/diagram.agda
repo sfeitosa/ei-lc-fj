@@ -9,7 +9,6 @@ open import Data.Product hiding (map ; zip)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
-open import Data.List
 open import Data.Bool using (true ; false)
 open import Function
 
@@ -71,26 +70,27 @@ module diagram where
   -- Elaborating ETLC to ITLC Value --
   ------------------------------------
 
-  elabVal : ∀ {τ} → ∃₂ (λ Γ v -> Val v × Γ ⊢ v ∶ τ × Env' Γ) → Value τ
-  elabVal (Γ , .true , V-True , T-True , env) = V-True
-  elabVal (Γ , .false , V-False , T-False , env) = V-False
-  elabVal (Γ , .(Lam _ _) , V-Lam , T-Lam prf , env) with elab prf
-  ...| prf' = V-Lam prf' env
+  data ElabErase : Ty → Set where
+    EE : ∀ {τ Γ v} → Val v → Γ ⊢ v ∶ τ → Env' Γ → ElabErase τ
 
+  elabVal : ∀ {τ} → ElabErase τ → Value τ
+  elabVal (EE V-True T-True env) = V-True
+  elabVal (EE V-False T-False env) = V-False
+  elabVal (EE V-Lam (T-Lam pr) env) = V-Lam (elab pr) env
 
   ------------------------------------
   -- Elaborating ITLC to ETLC Value --
   ------------------------------------
 
-  eraseVal : ∀ {Γ τ} → Value τ → Env' Γ → ∃₂ (λ Γ' v → Val v × Γ' ⊢ v ∶ τ × Env' Γ')
-  eraseVal {Γ} V-True env = Γ , true , V-True , T-True , env
-  eraseVal {Γ} V-False env = Γ , false , V-False , T-False , env 
-  eraseVal {Γ} (V-Lam {σ = n , τ} e env') env
-     = _ , Lam n (proj₁ (erase e)) , V-Lam , T-Lam (proj₂ (erase e)) , env'
+  eraseVal : ∀ {Γ τ} → Value τ → Env' Γ → ElabErase τ
+  eraseVal V-True env = EE V-True T-True env
+  eraseVal V-False env = EE V-False T-False env
+  eraseVal (V-Lam e env') env = EE V-Lam (T-Lam (proj₂ (erase e))) env'
+
 
   erase-elab-Val : ∀ {Γ τ}(val : Value τ)(env : Env' Γ) →
     elabVal (eraseVal val env) ≡ val
   erase-elab-Val V-True env = refl
   erase-elab-Val V-False env = refl
-  erase-elab-Val (V-Lam e env') env with eraseVal (V-Lam e env') env
-  ...| k = cong₂ V-Lam (erase-elab e) refl 
+  erase-elab-Val (V-Lam e env') env
+    = cong₂ V-Lam (erase-elab e) refl
