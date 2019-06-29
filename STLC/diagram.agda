@@ -1,9 +1,10 @@
 open import etlc
-open import itlc renaming (Expr to Term ; Val to Value)
+open import itlc renaming (Expr to Term ; Val to Value; eval to interp)
 open import common
 
 open import Data.List
 open import Data.List.All hiding (map ; zip)
+open import Data.Maybe
 open import Data.Nat
 open import Data.Product hiding (map ; zip)
 open import Relation.Binary.PropositionalEquality
@@ -94,3 +95,20 @@ module diagram where
   erase-elab-Val V-False env = refl
   erase-elab-Val (V-Lam e env') env
     = cong₂ V-Lam (erase-elab e) refl
+
+  -------------------------------------------
+  -- Converting steps to elaborated values --
+  -------------------------------------------
+
+  elabSteps : ∀ {Γ e τ} → Γ ⊢ e ∶ τ → Steps e → Env' Γ → Maybe (∃ Value)
+  -- here we need a generalized version of preservation
+  elabSteps prf (steps st (done v)) env = just ({!!} , elabVal (EE v {!!} env))
+  elabSteps _ (steps st out-of-gas) _   = nothing
+
+  diagram-theorem : ∀ {e τ n}(t : [] ⊢ e ∶ τ) →
+    elabSteps t (eval n t) [] ≡ interp n (elab t) []
+  diagram-theorem {n = zero} t with elab t
+  ...| t' = refl
+  diagram-theorem {n = suc n} t with eval (suc n) t | progress t
+  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Step x₂ = ?
+  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Done x₂ = ?

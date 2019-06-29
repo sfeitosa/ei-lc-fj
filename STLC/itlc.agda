@@ -97,10 +97,13 @@ eval' (suc n) (Lam x e)
 eval' (suc n) (App e e')
   = eval' n e >>=
        λ { (V-Lam e1 env) ->
-           eval' n e' >>= λ v -> usingEnv (v ∷ env) (eval' n e1) }
+           eval' n e' >>= λ v ->
+              usingEnv (v ∷ env) (eval' n e1) }
 
-eval : ∀ {Γ τ} → ℕ → Expr Γ τ → Env' Γ → Maybe (Val τ)
-eval n e env = eval' n e env
+eval : ∀ {Γ τ} → ℕ → Expr Γ τ → Env' Γ → Maybe (∃ Val)
+eval n e env with eval' n e env
+...| just v = just (_ , v)
+...| nothing = nothing
 
 -- Examples
 
