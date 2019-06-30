@@ -110,9 +110,11 @@ module diagram where
   -----------------------------------------------
 
   diagram-theorem : ∀ {e τ n}(t : [] ⊢ e ∶ τ) →
-    elabSteps t (eval n t) ≡ interp n (elab t) []
+                  elabSteps t (eval n t) ≡ interp n (elab t) []
   diagram-theorem {n = zero} t with elab t
   ...| t' = refl
   diagram-theorem {n = suc n} t with eval (suc n) t | progress t
-  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Step x₂ = {!!}
-  diagram-theorem {τ = _} {suc n} t | steps x x₁ | Done x₂ = {!!}
+  diagram-theorem {τ = _} {suc n} (T-App t t₁) | steps x x₁ | Step x₂ = {!!}
+  diagram-theorem {τ = _} {suc n} T-True | steps x x₁ | Done V-True = refl
+  diagram-theorem {τ = _} {suc n} T-False | steps x x₁ | Done V-False = refl
+  diagram-theorem {τ = _} {suc n} (T-Lam t) | steps x x₁ | Done V-Lam = refl
