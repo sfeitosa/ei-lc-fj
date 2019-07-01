@@ -20,6 +20,7 @@ module itfj (n : ℕ) where
   module ClassTable where
 
     record MSig : Set where
+      constructor mkSig
       field
         ret    : Ty
         params : List Ty
