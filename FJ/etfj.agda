@@ -8,7 +8,7 @@ open import Relation.Binary.PropositionalEquality using (refl; _≡_; _≢_)
 open import Data.Empty using (⊥-elim)
 open import Data.List.Membership.Propositional using (_∈_)
 
-module etfj (ths : ℕ) (Obj : ℕ)  where
+module etfj (Obj : ℕ)  where
 
   Name : Set
   Name = ℕ
@@ -79,8 +79,8 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
 
     open Auxiliary Δ
   
-    subs : Expr → List (ℕ × Expr) → Expr
-    subs-list : List Expr → List (ℕ × Expr) → List Expr
+    subs : Expr → List (Name × Expr) → Expr
+    subs-list : List Expr → List (Name × Expr) → List Expr
 
     subs (Var x) [] = Var x
     subs (Var x) ((y , e) ∷ l) with x ≟ y
@@ -134,8 +134,8 @@ module etfj (ths : ℕ) (Obj : ℕ)  where
 
     infix 4 _⊢_∶_
     infix 4 _⊧_∶_
-    data _⊢_∶_ : Ctx → Expr → ℕ → Set
-    data _⊧_∶_ : Ctx → List Expr → List ℕ → Set
+    data _⊢_∶_ : Ctx → Expr → Name → Set
+    data _⊧_∶_ : Ctx → List Expr → List Name → Set
 
     data _⊢_∶_ where
       T-Var   : ∀ {Γ x C}
